@@ -1,103 +1,109 @@
-import Image from "next/image";
+"use client"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { DollarSign, Target, MapPin, Calendar, Home } from "lucide-react"
+import { useState } from "react"
+import GastosScreen from "./components/gastos-screen"
+import ObjetivosScreen from "./components/objetivos-screen"
+import LugaresScreen from "./components/lugares-screen"
+import CalendarioScreen from "./components/calendario-screen"
+import HogarScreen from "./components/hogar-screen"
+import Image from "next/image"
 
-export default function Home() {
+export default function NosotrosApp() {
+  const [showUauu, setShowUauu] = useState(false)
+
+  const handleLogoClick = () => {
+    setShowUauu(true)
+    setTimeout(() => setShowUauu(false), 2000)
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gradient-to-br from-teal-50 to-cyan-100">
+      <div className="container mx-auto px-3 py-4 max-w-sm sm:max-w-md">
+        {/* Header Mobile First */}
+        <div className="text-center mb-4">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <button
+              onClick={handleLogoClick}
+              className="relative w-12 h-12 rounded-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
+            >
+              <Image src="/tiki-logo.jpeg" alt="Tiki Logo" fill className="object-cover" />
+            </button>
+            <h1 className="text-2xl sm:text-3xl font-bold text-teal-800">Nosotros</h1>
+          </div>
+          <p className="text-teal-600 text-sm">Melina & Tomas - Juntos en cada paso</p>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          {/* Mensaje Uauu Uauu */}
+          {showUauu && (
+            <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/20 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl p-6 shadow-2xl animate-bounce">
+                <p className="text-2xl font-bold text-teal-600">🐕 Uauu Uauu! 🐕</p>
+              </div>
+            </div>
+          )}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Navigation Tabs - Mobile Optimized */}
+        <Tabs defaultValue="gastos" className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-4 bg-white/90 backdrop-blur-sm h-12">
+            <TabsTrigger
+              value="gastos"
+              className="flex flex-col items-center gap-1 text-xs data-[state=active]:bg-teal-100 data-[state=active]:text-teal-700 py-2"
+            >
+              <DollarSign className="w-4 h-4" />
+              <span>Gastos</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="objetivos"
+              className="flex flex-col items-center gap-1 text-xs data-[state=active]:bg-cyan-100 data-[state=active]:text-cyan-700 py-2"
+            >
+              <Target className="w-4 h-4" />
+              <span>Objetivos</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="lugares"
+              className="flex flex-col items-center gap-1 text-xs data-[state=active]:bg-slate-100 data-[state=active]:text-slate-700 py-2"
+            >
+              <MapPin className="w-4 h-4" />
+              <span>Lugares</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="calendario"
+              className="flex flex-col items-center gap-1 text-xs data-[state=active]:bg-purple-100 data-[state=active]:text-purple-700 py-2"
+            >
+              <Calendar className="w-4 h-4" />
+              <span>Calendario</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="hogar"
+              className="flex flex-col items-center gap-1 text-xs data-[state=active]:bg-orange-100 data-[state=active]:text-orange-700 py-2"
+            >
+              <Home className="w-4 h-4" />
+              <span>Hogar</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="gastos" className="mt-0">
+            <GastosScreen />
+          </TabsContent>
+
+          <TabsContent value="objetivos" className="mt-0">
+            <ObjetivosScreen />
+          </TabsContent>
+
+          <TabsContent value="lugares" className="mt-0">
+            <LugaresScreen />
+          </TabsContent>
+
+          <TabsContent value="calendario" className="mt-0">
+            <CalendarioScreen />
+          </TabsContent>
+
+          <TabsContent value="hogar" className="mt-0">
+            <HogarScreen />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
-  );
+  )
 }
