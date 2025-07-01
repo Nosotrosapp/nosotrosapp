@@ -126,14 +126,24 @@ export default function GastosScreen() {
     cargarResumenMeses()
   }, [])
 
-  // Actualizar fecha actual cada minuto
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFechaActual(new Date())
-    }, 60000) // Actualizar cada minuto
+  // Actualizar `fechaActual` SOLO si el sistema pasó a un nuevo mes
+useEffect(() => {
+  const interval = setInterval(() => {
+    const ahora = new Date()
 
-    return () => clearInterval(interval)
-  }, [])
+    const cambioMes =
+      ahora.getFullYear() !== fechaActual.getFullYear() ||
+      ahora.getMonth() !== fechaActual.getMonth()
+
+    // Solo pisamos si cambió realmente el mes
+    if (cambioMes) {
+      setFechaActual(ahora)
+    }
+  }, 60_000) // 1 minuto
+
+  return () => clearInterval(interval)
+}, [fechaActual])
+
 
   const cargarGastos = async () => {
     try {
@@ -186,11 +196,32 @@ export default function GastosScreen() {
         return acc
       }, {})
 
-      // Convertir a array y ordenar por fecha descendente
-      const resumen = Object.values(gastosPorMes).sort((a: any, b: any) => {
-        if (a.año !== b.año) return b.año - a.año
-        return b.mes - a.mes
-      })
+  
+// Convertir a array y ordenar por fecha descendente
+const resumen = Object.values(gastosPorMes).sort((a: any, b: any) => {
+  if (a.año !== b.año) return b.año - a.año
+  return b.mes - a.mes
+}) as ResumenMes[]
+
+// ⬇️ BLOQUE NUEVO
+const añoActivo = fechaActual.getFullYear()
+const mesActivo = fechaActual.getMonth()
+
+const existeActivo = resumen.some(
+  (r) => r.año === añoActivo && r.mes === mesActivo
+)
+
+if (!existeActivo) {
+  resumen.push({
+    año: añoActivo,
+    mes: mesActivo,
+    totalGastos: 0,
+    gastosMelina: 0,
+    gastosTomas: 0,
+    cantidadGastos: 0,
+  })
+}
+// ⬆️ FIN BLOQUE NUEVO
 
       setResumenMeses(resumen as ResumenMes[])
     } catch (error) {
@@ -228,7 +259,7 @@ export default function GastosScreen() {
           monto: Number.parseFloat(nuevoGasto.monto),
           categoria: nuevoGasto.categoria,
           pagado_por: nuevoGasto.pagado_por,
-          fecha: new Date().toISOString().split("T")[0],
+          fecha: fechaActual.toISOString().split("T")[0],
         }
 
         const { error } = await supabase.from("gastos").insert([gastoData])
@@ -506,9 +537,16 @@ export default function GastosScreen() {
     )
   }
 
-  // Vista de detalle de un mes específico o mes actual
-  const fechaMostrar = mesSeleccionado ? new Date(mesSeleccionado.año, mesSeleccionado.mes) : fechaActual
-  const esMesActual = !mesSeleccionado
+ // Vista de detalle de un mes específico o mes actual
+const fechaMostrar = mesSeleccionado
+  ? new Date(mesSeleccionado.año, mesSeleccionado.mes)
+  : fechaActual
+
+// 👉 línea corregida
+const esMesActual =
+  fechaMostrar.getFullYear() === new Date().getFullYear() &&
+  fechaMostrar.getMonth() === new Date().getMonth()
+
 
   return (
     <div className="space-y-4">
