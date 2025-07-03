@@ -114,6 +114,33 @@ export default function GastosScreen() {
   const [vistaHistorial, setVistaHistorial] = useState(false)
   const [mesSeleccionado, setMesSeleccionado] = useState<{ año: number; mes: number } | null>(null)
   const [resumenMeses, setResumenMeses] = useState<ResumenMes[]>([])
+  // ── CÁLCULO DE LÍMITES PARA LAS FLECHAS ──
+const mesesOrdenados = resumenMeses
+  .slice()
+  .sort((a, b) =>
+    a.año !== b.año ? a.año - b.año : a.mes - b.mes
+  )
+
+const mesMin = mesesOrdenados[0]  // mes más antiguo
+const mesMax = {
+  año: fechaActual.getFullYear(),  // mes real actual
+  mes: fechaActual.getMonth(),
+}
+
+const fechaMostrar = mesSeleccionado
+  ? new Date(mesSeleccionado.año, mesSeleccionado.mes)
+  : fechaActual
+
+const showPrev =
+  fechaMostrar.getFullYear() > mesMin.año ||
+  (fechaMostrar.getFullYear() === mesMin.año &&
+   fechaMostrar.getMonth()    > mesMin.mes)
+
+const showNext =
+  fechaMostrar.getFullYear() < mesMax.año ||
+  (fechaMostrar.getFullYear() === mesMax.año &&
+   fechaMostrar.getMonth()    < mesMax.mes)
+
   const [nuevoGasto, setNuevoGasto] = useState({
     descripcion: "",
     monto: "",
@@ -532,11 +559,32 @@ const esMesActual =
               <CardTitle className="text-teal-800 flex items-center gap-2 text-lg">
                 <DollarSign className="w-5 h-5" />
                 {meses[fechaMostrar.getUTCMonth()]} {fechaMostrar.getUTCFullYear()}
-                {esMesActual && (
-                  <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs ml-2">
-                    Actual
-                  </Badge>
-                )}
+                {/* Flechas de navegación, solo si NO estás en historial */}
+{!vistaHistorial && (
+  <>
+    {showPrev && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => cambiarMes(-1)}
+        className="h-8 w-8 p-0"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </Button>
+    )}
+    {showNext && (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => cambiarMes(1)}
+        className="h-8 w-8 p-0"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </Button>
+    )}
+  </>
+)}
+
               </CardTitle>
             </div>
             <div className="flex items-center gap-2">
