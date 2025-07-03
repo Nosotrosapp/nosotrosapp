@@ -82,13 +82,14 @@ type Gasto = {
   fecha: string
 }
 
+// ─── Totales mensuales que ahora llegan de la view materializada ───
 type ResumenMes = {
-  año: number
-  mes: number
-  totalGastos: number
-  gastosMelina: number
-  gastosTomas: number
-  cantidadGastos: number
+  año: number          // ej. 2025
+  mes: number          // 0-index (0=Ene, 6=Jul)
+  total_gastos: number
+  gastos_melina: number
+  gastos_tomas: number
+  cantidad_gastos: number
 }
 
 export default function GastosScreen() {
@@ -132,8 +133,8 @@ useEffect(() => {
     const ahora = new Date()
 
     const cambioMes =
-      ahora.getFullYear() !== fechaActual.getFullYear() ||
-      ahora.getMonth() !== fechaActual.getMonth()
+      ahora.getUTCFullYear() !== fechaActual.getUTCFullYear() ||
+      ahora.getUTCMonth() !== fechaActual.getUTCMonth()
 
     // Solo pisamos si cambió realmente el mes
     if (cambioMes) {
@@ -159,75 +160,43 @@ useEffect(() => {
   }
 
   const cargarResumenMeses = async () => {
-    try {
-      const { data, error } = await supabase.from("gastos").select("*")
+  try {
+    const { data, error } = await supabase
+      .from("resumen_mensual")                 // ← la view
+      .select("*")
+      .order("año", { ascending: false })
+      .order("mes", { ascending: false })
 
-      if (error) throw error
+    if (error) throw error
 
-      // Agrupar gastos por mes y año
-      const gastosPorMes = (data || []).reduce((acc: any, gasto: Gasto) => {
-        const fecha = new Date(gasto.fecha)
-        const año = fecha.getFullYear()
-        const mes = fecha.getMonth()
-        const key = `${año}-${mes}`
+    const resumen = data as ResumenMes[]
 
-        if (!acc[key]) {
-          acc[key] = {
-            año,
-            mes,
-            gastos: [],
-            totalGastos: 0,
-            gastosMelina: 0,
-            gastosTomas: 0,
-            cantidadGastos: 0,
-          }
-        }
+    // ── aseguro que el mes activo exista aunque no tenga gastos ──
+    const añoA = fechaActual.getUTCFullYear()
+    const mesA = fechaActual.getUTCMonth()
+    if (!resumen.some(r => r.año === añoA && r.mes === mesA)) {
+      resumen.push({
+        año: añoA,
+        mes: mesA,
+        total_gastos: 0,
+        gastos_melina: 0,
+        gastos_tomas: 0,
+        cantidad_gastos: 0,
+      })
+    }
 
-        acc[key].gastos.push(gasto)
-        acc[key].totalGastos += gasto.monto
-        acc[key].cantidadGastos += 1
+    setResumenMeses(resumen)
+  } catch (err) {
+    console.error("Error cargando resumen mensual:", err)
+  }
+}
 
-        if (gasto.pagado_por === "Melina") {
-          acc[key].gastosMelina += gasto.monto
-        } else if (gasto.pagado_por === "Tomas") {
-          acc[key].gastosTomas += gasto.monto
-        }
-
-        return acc
-      }, {})
 
   
-// Convertir a array y ordenar por fecha descendente
-const resumen = Object.values(gastosPorMes).sort((a: any, b: any) => {
-  if (a.año !== b.año) return b.año - a.año
-  return b.mes - a.mes
-}) as ResumenMes[]
 
-// ⬇️ BLOQUE NUEVO
-const añoActivo = fechaActual.getFullYear()
-const mesActivo = fechaActual.getMonth()
 
-const existeActivo = resumen.some(
-  (r) => r.año === añoActivo && r.mes === mesActivo
-)
 
-if (!existeActivo) {
-  resumen.push({
-    año: añoActivo,
-    mes: mesActivo,
-    totalGastos: 0,
-    gastosMelina: 0,
-    gastosTomas: 0,
-    cantidadGastos: 0,
-  })
-}
-// ⬆️ FIN BLOQUE NUEVO
 
-      setResumenMeses(resumen as ResumenMes[])
-    } catch (error) {
-      console.error("Error cargando resumen de meses:", error)
-    }
-  }
 
   const eliminarMesCompleto = async (año: number, mes: number) => {
     try {
@@ -333,7 +302,7 @@ if (!existeActivo) {
 
   const cambiarMes = (direccion: number) => {
     const nuevaFecha = new Date(fechaActual)
-    nuevaFecha.setMonth(nuevaFecha.getMonth() + direccion)
+    nuevaFecha.setMonth(nuevaFecha.getUTCMonth() + direccion)
     setFechaActual(nuevaFecha)
   }
 
@@ -356,20 +325,20 @@ if (!existeActivo) {
   // Obtener gastos del mes actual o seleccionado
   const obtenerGastosDelMes = () => {
     const fecha = mesSeleccionado ? new Date(mesSeleccionado.año, mesSeleccionado.mes) : fechaActual
-    const año = fecha.getFullYear()
-    const mes = fecha.getMonth()
+    const año = fecha.getUTCFullYear()
+    const mes = fecha.getUTCMonth()
 
     return gastos.filter((gasto) => {
       const fechaGasto = new Date(gasto.fecha)
-      return fechaGasto.getFullYear() === año && fechaGasto.getMonth() === mes
+      return fechaGasto.getUTCFullYear() === año && fechaGasto.getUTCMonth() === mes
     })
   }
 
   const gastosDelMes = obtenerGastosDelMes()
-  const gastosMelina = gastosDelMes.filter((g) => g.pagado_por === "Melina").reduce((sum, g) => sum + g.monto, 0)
-  const gastosTomas = gastosDelMes.filter((g) => g.pagado_por === "Tomas").reduce((sum, g) => sum + g.monto, 0)
-  const totalMesActual = gastosMelina + gastosTomas
-  const balance = gastosMelina - gastosTomas
+  const gastos_melina = gastosDelMes.filter((g) => g.pagado_por === "Melina").reduce((sum, g) => sum + g.monto, 0)
+  const gastos_tomas = gastosDelMes.filter((g) => g.pagado_por === "Tomas").reduce((sum, g) => sum + g.monto, 0)
+  const totalMesActual = gastos_melina + gastos_tomas
+  const balance = gastos_melina - gastos_tomas
 
   const getCategoriaInfo = (categoriaId: string) => {
     return categorias.find((cat) => cat.id === categoriaId) || categorias[0]
@@ -457,21 +426,21 @@ if (!existeActivo) {
                     <h3 className="font-semibold text-gray-800 text-lg">
                       {meses[resumen.mes]} {resumen.año}
                     </h3>
-                    <p className="text-sm text-gray-600">{resumen.cantidadGastos} gastos registrados</p>
+                    <p className="text-sm text-gray-600">{resumen.cantidad_gastos} gastos registrados</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-bold text-gray-900">${resumen.totalGastos}</p>
+                    <p className="text-xl font-bold text-gray-900">${resumen.total_gastos}</p>
                     <p className="text-sm text-gray-600">Total gastado</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-3">
                   <div className="text-center">
-                    <p className="text-lg font-semibold text-pink-700">${resumen.gastosMelina}</p>
+                    <p className="text-lg font-semibold text-pink-700">${resumen.gastos_melina}</p>
                     <p className="text-xs text-gray-600">Melina</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-lg font-semibold text-blue-700">${resumen.gastosTomas}</p>
+                    <p className="text-lg font-semibold text-blue-700">${resumen.gastos_tomas}</p>
                     <p className="text-xs text-gray-600">Tomas</p>
                   </div>
                 </div>
@@ -480,10 +449,10 @@ if (!existeActivo) {
                   <div className="flex items-center gap-2">
                     <Scale className="w-4 h-4 text-gray-500" />
                     <span className="text-sm text-gray-600">
-                      Balance: ${Math.abs(resumen.gastosMelina - resumen.gastosTomas)}
-                      {resumen.gastosMelina > resumen.gastosTomas
+                      Balance: ${Math.abs(resumen.gastos_melina - resumen.gastos_tomas)}
+                      {resumen.gastos_melina > resumen.gastos_tomas
                         ? " (Tomas debe)"
-                        : resumen.gastosTomas > resumen.gastosMelina
+                        : resumen.gastos_tomas > resumen.gastos_melina
                           ? " (Melina debe)"
                           : " (Parejos)"}
                     </span>
@@ -506,7 +475,7 @@ if (!existeActivo) {
                         <AlertDialogTitle>¿Eliminar mes completo?</AlertDialogTitle>
                         <AlertDialogDescription>
                           Esta acción eliminará permanentemente todos los gastos de {meses[resumen.mes]} {resumen.año} (
-                          {resumen.cantidadGastos} gastos). Esta acción no se puede deshacer.
+                          {resumen.cantidad_gastos} gastos). Esta acción no se puede deshacer.
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
@@ -544,8 +513,8 @@ const fechaMostrar = mesSeleccionado
 
 // 👉 línea corregida
 const esMesActual =
-  fechaMostrar.getFullYear() === new Date().getFullYear() &&
-  fechaMostrar.getMonth() === new Date().getMonth()
+  fechaMostrar.getUTCFullYear() === new Date().getUTCFullYear() &&
+  fechaMostrar.getUTCMonth() === new Date().getUTCMonth()
 
 
   return (
@@ -562,7 +531,7 @@ const esMesActual =
               )}
               <CardTitle className="text-teal-800 flex items-center gap-2 text-lg">
                 <DollarSign className="w-5 h-5" />
-                {meses[fechaMostrar.getMonth()]} {fechaMostrar.getFullYear()}
+                {meses[fechaMostrar.getUTCMonth()]} {fechaMostrar.getUTCFullYear()}
                 {esMesActual && (
                   <Badge variant="secondary" className="bg-green-100 text-green-700 text-xs ml-2">
                     Actual
@@ -612,11 +581,11 @@ const esMesActual =
           {/* Gastos individuales */}
           <div className="grid grid-cols-2 gap-3 pt-2 border-t border-teal-200">
             <div className="text-center">
-              <p className="text-lg font-semibold text-teal-800">${gastosMelina}</p>
+              <p className="text-lg font-semibold text-teal-800">${gastos_melina}</p>
               <p className="text-xs text-teal-600">Melina</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-semibold text-teal-800">${gastosTomas}</p>
+              <p className="text-lg font-semibold text-teal-800">${gastos_tomas}</p>
               <p className="text-xs text-teal-600">Tomas</p>
             </div>
           </div>
