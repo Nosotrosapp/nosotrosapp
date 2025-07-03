@@ -100,14 +100,6 @@ export default function GastosScreen() {
     { id: "transporte", nombre: "Transporte", icon: Car, color: "bg-slate-100 text-slate-700" },
     { id: "compras", nombre: "Compras", icon: ShoppingBag, color: "bg-indigo-100 text-indigo-700" },
   ])
-    // DEBUG navegación meses
-  console.log({
-    vistaHistorial,
-    mesSeleccionado,
-    fechaActual: fechaActual.toISOString().slice(0,10),
-    esMesActual
-  })
-
   const [dialogCategoriaOpen, setDialogCategoriaOpen] = useState(false)
   const [nuevaCategoria, setNuevaCategoria] = useState({
     nombre: "",
